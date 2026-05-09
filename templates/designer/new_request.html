@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Nová požiadavka na dizajn{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-pencil-square me-2"></i>Požiadavka na dizajn interiéru</h2>
+  <div class="uc-info mb-3">
+    <strong>UC03 (zákaznícka strana)</strong> – Vyplňte preferencie a odošlite požiadavku tímu dizajnérov.
+    Dizajnér vytvorí návrh a pošle vám ho na schválenie.
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <form method="POST">
+        <div class="form-section">
+          <h5><i class="bi bi-house me-2"></i>O priestore</h5>
+          <div class="mb-3">
+            <label class="form-label">Typ miestnosti</label>
+            <select name="room_type" class="form-select" required>
+              <option value="">— vyberte —</option>
+              <option>Obývacia izba</option>
+              <option>Spálňa</option>
+              <option>Jedáleň</option>
+              <option>Kancelária</option>
+              <option>Detská izba</option>
+              <option>Kuchyňa</option>
+              <option>Chodba</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rozmery miestnosti (dĺžka × šírka × výška)</label>
+            <input type="text" name="room_dimensions" class="form-control"
+                   placeholder="napr. 5.5 × 4.2 × 2.6 m" required>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h5><i class="bi bi-palette me-2"></i>Štýl a preferencie</h5>
+          <div class="mb-3">
+            <label class="form-label">Preferovaný štýl</label>
+            <select name="style_preferences" class="form-select">
+              <option value="">— vyberte —</option>
+              <option>Škandinávsky</option>
+              <option>Moderný / minimalistický</option>
+              <option>Industriálny</option>
+              <option>Klasický</option>
+              <option>Boho / prírodný</option>
+              <option>Iné</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ďalšie požiadavky a poznámky</label>
+            <textarea name="customer_notes" class="form-control" rows="4"
+                      placeholder="Popíšte svoju predstavu: farby, materiály, počet miest na sedenie, špeciálne požiadavky..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">
+              Cenový limit (€)
+              <span class="text-muted small fw-normal">(UC03 výnimka: ak návrh prekročí limit o 40%, dizajnér vás kontaktuje)</span>
+            </label>
+            <input type="number" name="price_limit" class="form-control"
+                   placeholder="napr. 3000" min="0" step="50">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary px-4 py-2">
+          <i class="bi bi-send me-2"></i>Odoslať požiadavku dizajnérovi
+        </button>
+        <a href="{{ url_for('design_my') }}" class="btn btn-outline-secondary ms-2">Moje požiadavky</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

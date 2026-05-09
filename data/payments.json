@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "order_id": 2,
+    "amount": 1123.75,
+    "method": "bank_transfer",
+    "status": "pending",
+    "transaction_id": "",
+    "bank_reference": "VS000002",
+    "created_at": "2026-04-27T09:13:51.607658",
+    "completed_at": ""
+  },
+  {
+    "id": 2,
+    "order_id": 2,
+    "amount": 1123.75,
+    "method": "card",
+    "status": "failed",
+    "transaction_id": "",
+    "bank_reference": "",
+    "created_at": "2026-04-27T09:14:16.040193",
+    "completed_at": ""
+  },
+  {
+    "id": 3,
+    "order_id": 3,
+    "amount": 945.0,
+    "method": "card",
+    "status": "completed",
+    "transaction_id": "4A194EEB",
+    "bank_reference": "",
+    "created_at": "2026-04-27T09:43:49.307162",
+    "completed_at": "2026-04-27T09:43:49.307144"
+  }
+]

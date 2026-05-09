@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Katalóg nábytku{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="uc-info">
+    <strong>UC01 / UC01a / UC01b</strong> – Prezrite kategórie, vyberte produkt a pridajte ho do košíka (štandardne alebo na mieru).
+  </div>
+
+  <h2 class="fw-bold mb-3"><i class="bi bi-grid me-2"></i>Katalóg nábytku</h2>
+
+  <!-- Category filter -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('catalog_index') }}"
+       class="category-chip {% if not selected_cat %}active{% endif %}">
+      <i class="bi bi-grid-3x3-gap"></i> Všetko
+    </a>
+    {% for cat in categories %}
+    <a href="{{ url_for('catalog_index', kategoria=cat.id) }}"
+       class="category-chip {% if selected_cat == cat.id %}active{% endif %}">
+      <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Products grid -->
+  {% if products %}
+  <div class="row g-4">
+    {% for p in products %}
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+      <div class="card product-card h-100">
+        <div class="card-img-placeholder">
+          <i class="bi bi-image"></i>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="mb-1">
+            {% if p.allows_custom %}
+            <span class="badge-custom"><i class="bi bi-scissors me-1"></i>Na mieru</span>
+            {% endif %}
+            {% if not p.is_available or p.stock == 0 %}
+            <span class="badge-unavailable"><i class="bi bi-x-circle me-1"></i>Nedostupné</span>
+            {% endif %}
+          </div>
+          <h6 class="fw-bold mt-1 mb-1">{{ p.name }}</h6>
+          <p class="text-muted small mb-1 flex-grow-1">{{ p.description[:80] }}{% if p.description|length > 80 %}…{% endif %}</p>
+          <p class="small mb-2"><i class="bi bi-rulers me-1 text-muted"></i>{{ p.dimensions }}
+            {% if p.material %} &bull; {{ p.material }}{% endif %}
+          </p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="price-tag">{{ "%.2f"|format(p.price) }} €</span>
+            <a href="{{ url_for('catalog_product', product_id=p.id) }}"
+               class="btn btn-sm btn-outline-primary">Detail</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+    <p>V tejto kategórii sa nenachádzajú žiadne produkty.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

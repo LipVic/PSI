@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Príjem tovaru – objednávka #{{ so.id }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-1">
+    <i class="bi bi-box-arrow-in-down me-2"></i>Príjem tovaru – objednávka #{{ so.id }}
+  </h2>
+  <div class="uc-info mb-3">
+    <strong>UC04</strong> – Pre každú položku vyberte akciu: <strong>Prijať</strong> (plné množstvo),
+    <strong>Čiastočne</strong> (zadajte skutočne prijaté množstvo – UC04 alternatíva),
+    alebo <strong>Reklamovať</strong> (poškodený tovar – UC04 výnimka).
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="form-section mb-3">
+        <h5><i class="bi bi-building me-2"></i>Dodávateľ</h5>
+        <strong>{{ supplier.name if supplier else '—' }}</strong>
+        {% if supplier and supplier.contact_email %}
+        &bull; {{ supplier.contact_email }}
+        {% endif %}
+        {% if so.expected_delivery %}
+        &bull; Očakávané doručenie: {{ so.expected_delivery[:10] }}
+        {% endif %}
+        {% if so.notes %}
+        <p class="small text-muted mt-1 mb-0">{{ so.notes }}</p>
+        {% endif %}
+      </div>
+
+      <form method="POST">
+        {% for item in items %}
+        <div class="wh-item-row mb-3" id="row-{{ item.id }}">
+          <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+            <div>
+              <strong>{{ item.item_name() }}</strong>
+              <div class="small text-muted">
+                Objednané: <strong>{{ item.ordered_qty }} ks</strong>
+                &bull; Cena/ks: {{ "%.2f"|format(item.unit_price) }} €
+              </div>
+            </div>
+            <span class="status-badge status-{{ item.status }}">{{ item.status_label() }}</span>
+          </div>
+
+          <!-- Action radio -->
+          <div class="d-flex flex-wrap gap-3 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio"
+                     name="item_{{ item.id }}_action" value="receive"
+                     id="r{{ item.id }}_full" checked
+                     onchange="toggleItemFields({{ item.id }}, 'receive')">
+              <label class="form-check-label text-success fw-semibold" for="r{{ item.id }}_full">
+                <i class="bi bi-check-circle me-1"></i>Prijať (plné)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio"
+                     name="item_{{ item.id }}_action" value="partial"
+                     id="r{{ item.id }}_partial"
+                     onchange="toggleItemFields({{ item.id }}, 'partial')">
+              <label class="form-check-label text-warning fw-semibold" for="r{{ item.id }}_partial">
+                <i class="bi bi-exclamation-circle me-1"></i>Čiastočne (UC04 alt)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio"
+                     name="item_{{ item.id }}_action" value="claim"
+                     id="r{{ item.id }}_claim"
+                     onchange="toggleItemFields({{ item.id }}, 'claim')">
+              <label class="form-check-label text-danger fw-semibold" for="r{{ item.id }}_claim">
+                <i class="bi bi-x-circle me-1"></i>Reklamovať (UC04 výnimka)
+              </label>
+            </div>
+          </div>
+
+          <!-- Partial qty -->
+          <div id="partial-{{ item.id }}" class="row g-2 mb-2" style="display:none">
+            <div class="col-6">
+              <label class="form-label small">Skutočne prijaté množstvo (ks)</label>
+              <input type="number" name="item_{{ item.id }}_received_qty"
+                     class="form-control form-control-sm"
+                     value="{{ item.ordered_qty }}" min="1" max="{{ item.ordered_qty }}">
+            </div>
+          </div>
+
+          <!-- Claim reason -->
+          <div id="claim-{{ item.id }}" class="mb-2" style="display:none">
+            <label class="form-label small text-danger">Dôvod reklamácie</label>
+            <input type="text" name="item_{{ item.id }}_claim_reason"
+                   class="form-control form-control-sm"
+                   placeholder="napr. Poškodené pri doprave, nesprávny materiál...">
+          </div>
+
+          <!-- Location -->
+          <div id="location-{{ item.id }}" class="col-md-5">
+            <label class="form-label small">Umiestnenie v sklade</label>
+            <input type="text" name="item_{{ item.id }}_location"
+                   class="form-control form-control-sm"
+                   placeholder="napr. Regál A-3, Box 12">
+          </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary px-4 py-2">
+          <i class="bi bi-check-all me-2"></i>Potvrdiť príjem tovaru
+        </button>
+        <a href="{{ url_for('warehouse_dashboard') }}" class="btn btn-outline-secondary ms-2">Zrušiť</a>
+      </form>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="order-summary">
+        <h5 class="fw-bold mb-3">Legenda akcií</h5>
+        <div class="small">
+          <div class="d-flex gap-2 mb-2 align-items-start">
+            <i class="bi bi-check-circle text-success mt-1"></i>
+            <div><strong>Prijať</strong> – tovar doručený v poriadku, plné množstvo naskladnené.</div>
+          </div>
+          <div class="d-flex gap-2 mb-2 align-items-start">
+            <i class="bi bi-exclamation-circle text-warning mt-1"></i>
+            <div><strong>Čiastočne</strong> – dodané menej ako objednané.
+            Objednávka zostane otvorená pre zvyšok (UC04 alternatíva).</div>
+          </div>
+          <div class="d-flex gap-2 align-items-start">
+            <i class="bi bi-x-circle text-danger mt-1"></i>
+            <div><strong>Reklamovať</strong> – poškodený alebo nekvalitný tovar.
+            Vygeneruje sa reklamačný protokol, zásoby sa nenasledujú (UC04 výnimka).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleItemFields(id, action) {
+  document.getElementById('partial-' + id).style.display = (action === 'partial') ? '' : 'none';
+  document.getElementById('claim-'   + id).style.display = (action === 'claim')   ? '' : 'none';
+  document.getElementById('location-'+ id).style.display = (action === 'claim')   ? 'none' : '';
+}
+</script>
+{% endblock %}

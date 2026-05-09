@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('catalog_index') }}">Katalóg</a></li>
+      {% if category %}
+      <li class="breadcrumb-item">
+        <a href="{{ url_for('catalog_index', kategoria=category.id) }}">{{ category.name }}</a>
+      </li>
+      {% endif %}
+      <li class="breadcrumb-item active">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Image placeholder -->
+    <div class="col-md-5">
+      <div class="card-img-placeholder lg rounded-3">
+        <i class="bi bi-image"></i>
+      </div>
+      {% if similar %}
+      <div class="mt-3">
+        <p class="small fw-bold text-muted mb-2">Podobné produkty</p>
+        <div class="d-flex flex-wrap gap-2">
+          {% for s in similar %}
+          <a href="{{ url_for('catalog_product', product_id=s.id) }}"
+             class="badge text-bg-light border text-dark text-decoration-none">
+            {{ s.name }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Product info -->
+    <div class="col-md-7">
+      <div class="mb-2">
+        {% if product.allows_custom %}
+        <span class="badge-custom"><i class="bi bi-scissors me-1"></i>Dostupné na mieru</span>
+        {% endif %}
+        {% if not product.is_available or product.stock == 0 %}
+        <span class="badge-unavailable">Nedostupné</span>
+        {% endif %}
+      </div>
+      <h1 class="fw-bold h2 mb-1">{{ product.name }}</h1>
+      <div class="price-tag mb-3">{{ "%.2f"|format(product.price) }} €</div>
+
+      <p class="text-muted">{{ product.description }}</p>
+
+      <table class="table table-sm table-borderless mb-3">
+        <tr><td class="fw-semibold text-muted" style="width:130px">Materiál</td>
+            <td>{{ product.material or '—' }}</td></tr>
+        <tr><td class="fw-semibold text-muted">Rozmery</td>
+            <td>{{ product.dimensions or '—' }}</td></tr>
+        <tr><td class="fw-semibold text-muted">Skladom</td>
+            <td>
+              {% if product.stock > 0 %}
+              <span class="text-success fw-semibold">{{ product.stock }} ks</span>
+              {% else %}
+              <span class="text-danger">Vypredané</span>
+              {% endif %}
+            </td></tr>
+      </table>
+
+      {% if not current_user.is_authenticated %}
+      <div class="alert alert-warning">
+        <a href="{{ url_for('auth_login') }}">Prihláste sa</a> pre pridanie do košíka.
+      </div>
+      {% elif current_user.role == 'customer' %}
+
+        <!-- UC01a exception: product unavailable -->
+        {% if not product.is_available or product.stock == 0 %}
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Produkt nie je momentálne dostupný.</strong><br>
+          {% if similar %}
+          Alternatívne produkty v tejto kategórii sú zobrazené vľavo.
+          {% endif %}
+          Kontaktujte nás pre ďalšie informácie.
+        </div>
+
+        {% else %}
+
+        <!-- Tab switch: standard vs custom -->
+        <ul class="nav nav-tabs mb-3" id="addTabs">
+          <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#tab-standard">
+              <i class="bi bi-cart-plus me-1"></i>Štandardná objednávka
+            </a>
+          </li>
+          {% if product.allows_custom %}
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#tab-custom">
+              <i class="bi bi-scissors me-1"></i>Na mieru
+              <span class="badge text-bg-warning text-dark ms-1">+{{ product.custom_surcharge_pct|int }}%</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+
+        <div class="tab-content">
+          <!-- UC01a – standard -->
+          <div class="tab-pane fade show active" id="tab-standard">
+            <div class="uc-info mb-3">
+              <strong>UC01a</strong> – Vyberte množstvo a pridajte do košíka.
+            </div>
+            <form method="POST" action="{{ url_for('cart_add', product_id=product.id) }}">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <label class="form-label mb-0 fw-semibold">Množstvo:</label>
+                <input type="number" name="quantity" value="1" min="1"
+                       max="{{ product.stock }}" class="form-control" style="width:90px">
+              </div>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-cart-plus me-2"></i>Pridať do košíka
+              </button>
+            </form>
+          </div>
+
+          <!-- UC01b – custom -->
+          {% if product.allows_custom %}
+          <div class="tab-pane fade" id="tab-custom">
+            <div class="uc-info mb-3">
+              <strong>UC01b</strong> – Zadajte vlastné rozmery a farbu (cena +{{ product.custom_surcharge_pct|int }}%
+              = <strong>{{ "%.2f"|format(product.custom_price()) }} €</strong>).
+            </div>
+            <form method="POST" action="{{ url_for('cart_add_custom', product_id=product.id) }}">
+              <div class="row g-2 mb-2">
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Šírka (cm)</label>
+                  <input type="number" name="custom_width" class="form-control form-control-sm"
+                         placeholder="napr. 120" step="0.1" min="10" max="500">
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Výška (cm)</label>
+                  <input type="number" name="custom_height" class="form-control form-control-sm"
+                         placeholder="napr. 75" step="0.1" min="10" max="500">
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Hĺbka (cm)</label>
+                  <input type="number" name="custom_depth" class="form-control form-control-sm"
+                         placeholder="napr. 60" step="0.1" min="5" max="300">
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Farba / povrchová úprava</label>
+                <input type="text" name="custom_color" class="form-control form-control-sm"
+                       placeholder="napr. Biela matiná, Dub prírodný">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">
+                  Špeciálne požiadavky
+                  <span class="text-muted fw-normal">(UC01b alt: spojíme vás s pracovníkom)</span>
+                </label>
+                <textarea name="special_requirements" class="form-control form-control-sm"
+                          rows="2" placeholder="Napr. extra police, zaoblené rohy..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-scissors me-2"></i>Pridať na mieru do košíka
+              </button>
+            </form>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endif %} {# end is_available #}
+
+      {% endif %} {# end role check #}
+    </div>
+  </div>
+</div>
+{% endblock %}

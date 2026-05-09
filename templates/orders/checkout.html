@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Pokladňa{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-bag-check me-2"></i>Potvrdenie objednávky</h2>
+  <div class="uc-info mb-3">
+    <strong>UC01 (kroky 9–10)</strong> – Zvoľte spôsob doručenia, adresu a dátum, potom potvrďte záväznú objednávku.
+  </div>
+
+  <form method="POST">
+  <div class="row g-4">
+    <div class="col-lg-7">
+
+      <!-- Delivery method -->
+      <div class="form-section">
+        <h5><i class="bi bi-truck me-2"></i>Spôsob doručenia</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="d-block">
+              <input type="radio" name="delivery_method" value="pickup" id="r-pickup" class="d-none" checked>
+              <div class="payment-method-card" id="card-pickup">
+                <i class="bi bi-shop fs-2 d-block mb-1" style="color:var(--primary)"></i>
+                <strong>Osobný odber</strong>
+                <p class="small text-muted mb-0">Vyzdvihnúť v sklade – zadarmo</p>
+              </div>
+            </label>
+          </div>
+          <div class="col-md-4">
+            <label class="d-block">
+              <input type="radio" name="delivery_method" value="delivery" id="r-delivery" class="d-none">
+              <div class="payment-method-card" id="card-delivery">
+                <i class="bi bi-truck fs-2 d-block mb-1" style="color:var(--primary)"></i>
+                <strong>Doručenie domov</strong>
+                <p class="small text-muted mb-0">Donáška na adresu zákazníka</p>
+              </div>
+            </label>
+          </div>
+          <div class="col-md-4">
+            <label class="d-block">
+              <input type="radio" name="delivery_method" value="delivery_assembly" id="r-assembly" class="d-none">
+              <div class="payment-method-card" id="card-assembly">
+                <i class="bi bi-tools fs-2 d-block mb-1" style="color:var(--accent)"></i>
+                <strong>Doručenie + montáž</strong>
+                <p class="small text-muted mb-0">UC07 – zostavenie nábytku na mieste</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="delivery-fields" class="mt-3" style="display:none">
+          <div class="mb-3">
+            <label class="form-label">Doručovacia adresa</label>
+            <input type="text" name="delivery_address" class="form-control"
+                   placeholder="Ulica 1, PSČ Mesto"
+                   value="{{ current_user.address }}">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">
+              Požadovaný dátum doručenia
+              <span class="text-muted small">(odhadovaný: {{ est_date }})</span>
+            </label>
+            <input type="date" name="delivery_date" class="form-control"
+                   min="{{ est_date }}" value="{{ est_date }}">
+            <div class="form-text text-warning">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              Ak zvolíte dátum skôr ako 3 dni, systém vás upozorní – kontaktujte zákaznícku podporu
+              (UC01 výnimka).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-section">
+        <h5><i class="bi bi-chat-left me-2"></i>Poznámky</h5>
+        <textarea name="notes" class="form-control" rows="2"
+                  placeholder="Napr. zavolajte pred príchodom, kód brány..."></textarea>
+      </div>
+    </div>
+
+    <!-- Order summary -->
+    <div class="col-lg-5">
+      <div class="order-summary sticky-top" style="top:80px">
+        <h5 class="fw-bold mb-3">Súhrn objednávky</h5>
+        {% for item in items %}
+        {% set p = products.get(item.product_id) %}
+        <div class="d-flex justify-content-between small mb-1">
+          <span>
+            {% if p %}{{ p.name }}{% else %}Produkt{% endif %}
+            {% if item.is_custom %}<span class="badge-custom ms-1">Na mieru</span>{% endif %}
+            × {{ item.quantity }}
+          </span>
+          <span class="fw-semibold">{{ "%.2f"|format(item.subtotal()) }} €</span>
+        </div>
+        {% endfor %}
+        <hr>
+        <div class="d-flex justify-content-between mb-3">
+          <span class="fw-bold">Spolu</span>
+          <span class="order-total">{{ "%.2f"|format(order.total_price) }} €</span>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 py-2">
+          <i class="bi bi-lock me-2"></i>Záväzne potvrdiť objednávku
+        </button>
+        <a href="{{ url_for('cart_view') }}" class="btn btn-outline-secondary w-100 mt-2">
+          <i class="bi bi-arrow-left me-1"></i>Späť do košíka
+        </a>
+      </div>
+    </div>
+  </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const cards = {
+  pickup:            { radio: document.getElementById('r-pickup'),    card: document.getElementById('card-pickup') },
+  delivery:          { radio: document.getElementById('r-delivery'),  card: document.getElementById('card-delivery') },
+  delivery_assembly: { radio: document.getElementById('r-assembly'),  card: document.getElementById('card-assembly') },
+};
+const fields = document.getElementById('delivery-fields');
+
+function updateCards() {
+  const needsAddress = cards.delivery.radio.checked || cards.delivery_assembly.radio.checked;
+  fields.style.display = needsAddress ? '' : 'none';
+  Object.values(cards).forEach(({radio, card}) => card.classList.toggle('selected', radio.checked));
+}
+Object.values(cards).forEach(({radio, card}) => {
+  card.addEventListener('click', () => { radio.checked = true; updateCards(); });
+});
+updateCards();
+</script>
+{% endblock %}

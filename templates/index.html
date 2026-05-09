@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Domov{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="container position-relative">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1 class="fw-bold display-5 mb-3">Nábytok presne<br><span style="color:var(--secondary)">pre váš priestor</span></h1>
+        <p class="hero-subtitle mb-4">Navrhujeme, vyrábame a doručujeme nábytok na mieru. Celý proces online – od návrhu až po montáž.</p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{{ url_for('catalog_index') }}" class="btn btn-hero-primary">
+            <i class="bi bi-grid me-2"></i>Prezrieť katalóg
+          </a>
+          {% if not current_user.is_authenticated %}
+          <a href="{{ url_for('auth_register') }}" class="btn btn-hero-outline">
+            <i class="bi bi-person-plus me-2"></i>Registrovať sa
+          </a>
+          {% elif current_user.role == 'customer' %}
+          <a href="{{ url_for('design_new') }}" class="btn btn-hero-outline">
+            <i class="bi bi-pencil-square me-2"></i>Požiadavka na dizajn
+          </a>
+          {% elif current_user.role == 'designer' %}
+          <a href="{{ url_for('designer_dashboard') }}" class="btn btn-hero-outline">
+            <i class="bi bi-brush me-2"></i>Portál dizajnéra
+          </a>
+          {% elif current_user.role == 'admin' %}
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-hero-outline">
+            <i class="bi bi-shield-check me-2"></i>Admin dashboard
+          </a>
+          {% elif current_user.role == 'warehouse' %}
+          <a href="{{ url_for('warehouse_dashboard') }}" class="btn btn-hero-outline">
+            <i class="bi bi-boxes me-2"></i>Portál skladu
+          </a>
+          {% elif current_user.role == 'field_worker' %}
+          <a href="{{ url_for('delivery_dashboard') }}" class="btn btn-hero-outline">
+            <i class="bi bi-truck me-2"></i>Moje doručenia
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center mt-4 mt-lg-0">
+        <div style="font-size:9rem;opacity:.18;line-height:1">
+          <i class="bi bi-house-heart-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Demo login hints -->
+<div class="container mt-4">
+  <div class="uc-info">
+    <strong><i class="bi bi-info-circle me-1"></i>Demo prístupy:</strong>
+    zákazník: <code>customer@demo.com</code> &nbsp;|&nbsp;
+    dizajnér: <code>designer@demo.com</code> &nbsp;|&nbsp;
+    admin: <code>admin@demo.com</code> &nbsp;|&nbsp;
+    sklad: <code>warehouse@demo.com</code> &nbsp;|&nbsp;
+    terénny: <code>worker@demo.com</code>
+    &nbsp;— heslo všetkých: <code>demo1234</code>
+  </div>
+</div>
+
+<!-- Categories -->
+<section class="container my-5">
+  <h2 class="fw-bold mb-1">Kategórie nábytku</h2>
+  <p class="text-muted mb-4">Vyberte kategóriu a prezrite si dostupné produkty.</p>
+  <div class="d-flex flex-wrap gap-3">
+    <a href="{{ url_for('catalog_index') }}" class="category-chip">
+      <i class="bi bi-grid-3x3-gap"></i> Všetko
+    </a>
+    {% for cat in categories %}
+    <a href="{{ url_for('catalog_index', kategoria=cat.id) }}" class="category-chip">
+      <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Featured products -->
+<section class="container mb-5">
+  <h2 class="fw-bold mb-1">Odporúčané produkty</h2>
+  <p class="text-muted mb-4">Najpredávanejšie kusy z nášho katalógu.</p>
+  <div class="row g-4">
+    {% for p in featured %}
+    <div class="col-sm-6 col-lg-4">
+      <div class="card product-card h-100">
+        <div class="card-img-placeholder">
+          <i class="bi bi-image"></i>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="mb-1">
+            {% if p.allows_custom %}
+            <span class="badge-custom"><i class="bi bi-scissors me-1"></i>Na mieru</span>
+            {% endif %}
+            {% if not p.is_available or p.stock == 0 %}
+            <span class="badge-unavailable">Nedostupné</span>
+            {% endif %}
+          </div>
+          <h6 class="fw-bold mt-1 mb-1">{{ p.name }}</h6>
+          <p class="text-muted small mb-2 flex-grow-1">{{ p.material }} &bull; {{ p.dimensions }}</p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="price-tag">{{ "%.2f"|format(p.price) }} €</span>
+            <a href="{{ url_for('catalog_product', product_id=p.id) }}"
+               class="btn btn-sm btn-outline-primary">Detail</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-4">
+    <a href="{{ url_for('catalog_index') }}" class="btn btn-primary px-4">
+      <i class="bi bi-grid me-2"></i>Zobraziť celý katalóg
+    </a>
+  </div>
+</section>
+
+<!-- Services info -->
+<section style="background:linear-gradient(135deg,#faf5ef,#f0e8da)" class="py-5">
+  <div class="container">
+    <h2 class="fw-bold text-center mb-4">Ako to funguje?</h2>
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-grid-3x3-gap fs-1 mb-3" style="color:var(--primary)"></i>
+          <h6 class="fw-bold">1. Vyberte nábytok</h6>
+          <p class="text-muted small">Prezrite katalóg alebo požiadajte o dizajn na mieru.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-cart-check fs-1 mb-3" style="color:var(--primary)"></i>
+          <h6 class="fw-bold">2. Objednajte</h6>
+          <p class="text-muted small">Pridajte do košíka a potvrďte objednávku.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-credit-card fs-1 mb-3" style="color:var(--primary)"></i>
+          <h6 class="fw-bold">3. Zaplaťte</h6>
+          <p class="text-muted small">Kartou alebo bankovým prevodom.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-truck fs-1 mb-3" style="color:var(--primary)"></i>
+          <h6 class="fw-bold">4. Doručíme</h6>
+          <p class="text-muted small">Doručíme a zmontujeme priamo u vás.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

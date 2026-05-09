@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "supplier_id": 1,
+    "status": "open",
+    "expected_delivery": "2026-04-30T09:08:14.203029",
+    "notes": "Pravidelná mesačná objednávka dubového masívu",
+    "created_at": "2026-04-27T09:08:14.203060"
+  },
+  {
+    "id": 2,
+    "supplier_id": 2,
+    "status": "delivered",
+    "expected_delivery": "2026-05-02T09:08:14.210785",
+    "notes": "Kovové komponenty pre stolové nôžky",
+    "created_at": "2026-04-27T09:08:14.210806"
+  }
+]

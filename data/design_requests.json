@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "customer_id": 1,
+    "status": "approved",
+    "designer_id": 2,
+    "order_item_id": null,
+    "room_type": "Jedáleň",
+    "style_preferences": "Industriálny",
+    "room_dimensions": "25",
+    "customer_notes": "ano",
+    "designer_notes": "super",
+    "material_suggestion": "dub",
+    "estimated_price": 450.0,
+    "customer_price_limit": 500.0,
+    "final_price": 450.0,
+    "revision_count": 0,
+    "created_at": "2026-04-27T09:14:47.043751",
+    "updated_at": "2026-04-27T09:32:37.826231"
+  }
+]

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Upraviť' if product else 'Nový' }} produkt{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-1">
+    <i class="bi bi-{{ 'pencil' if product else 'plus-circle' }} me-2"></i>
+    {{ 'Upraviť produkt' if product else 'Pridať nový produkt' }}
+  </h2>
+  <div class="uc-info mb-3">
+    <strong>UC05{% if product %} alternatívny scenár{% endif %}</strong> –
+    {% if product %}Upravte parametre existujúceho produktu a uložte zmeny.
+    {% else %}Zadajte údaje nového produktu a potvrďte vytvorenie.{% endif %}
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <form method="POST">
+        <div class="form-section">
+          <h5><i class="bi bi-info-circle me-2"></i>Základné informácie</h5>
+
+          <div class="mb-3">
+            <label class="form-label">Kategória</label>
+            <select name="category_id" class="form-select" required>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}"
+                {% if product and product.category_id == cat.id %}selected{% endif %}>
+                {{ cat.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Názov produktu</label>
+            <input type="text" name="name" class="form-control" required
+                   value="{{ product.name if product else '' }}"
+                   placeholder="napr. Dubový jedálenský stôl Oslo">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Popis</label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Stručný popis produktu...">{{ product.description if product else '' }}</textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h5><i class="bi bi-rulers me-2"></i>Technické parametre</h5>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Materiál</label>
+              <input type="text" name="material" class="form-control"
+                     value="{{ product.material if product else '' }}"
+                     placeholder="napr. Masívny dub">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Rozmery</label>
+              <input type="text" name="dimensions" class="form-control"
+                     value="{{ product.dimensions if product else '' }}"
+                     placeholder="napr. 160×90×75 cm">
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Cena (€)</label>
+              <input type="number" name="price" class="form-control" required step="0.01" min="0"
+                     value="{{ product.price if product else '' }}"
+                     placeholder="0.00">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Počet na sklade</label>
+              <input type="number" name="stock" class="form-control" min="0"
+                     value="{{ product.stock if product else 0 }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Príplatok na mieru (%)</label>
+              <input type="number" name="custom_surcharge_pct" class="form-control"
+                     min="0" max="200" step="1"
+                     value="{{ product.custom_surcharge_pct if product else 20 }}">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h5><i class="bi bi-toggle-on me-2"></i>Nastavenia</h5>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="is_available"
+                   id="is_available" role="switch"
+                   {% if not product or product.is_available %}checked{% endif %}>
+            <label class="form-check-label" for="is_available">Produkt dostupný v katalógu</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="allows_custom"
+                   id="allows_custom" role="switch"
+                   {% if not product or product.allows_custom %}checked{% endif %}>
+            <label class="form-check-label" for="allows_custom">Povoliť výrobu na mieru (UC01b)</label>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary px-4 py-2">
+            <i class="bi bi-floppy me-2"></i>{{ 'Uložiť zmeny' if product else 'Pridať do katalógu' }}
+          </button>
+          <a href="{{ url_for('admin_catalog') }}" class="btn btn-outline-secondary">Zrušiť</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

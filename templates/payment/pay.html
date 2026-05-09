@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Platba objednávky #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-credit-card me-2"></i>Platba objednávky #{{ order.id }}</h2>
+  <div class="uc-info mb-3">
+    <strong>UC02</strong> – Vyberte spôsob platby a dokončite objednávku. Alternatíva: bankový prevod. Výnimka: nedostatok prostriedkov (zaškrtnite checkbox).
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <form method="POST">
+        <!-- Payment method tabs -->
+        <div class="form-section">
+          <h5><i class="bi bi-wallet2 me-2"></i>Spôsob platby</h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="payment-method-card selected" id="card-card" onclick="selectMethod('card')">
+                <i class="bi bi-credit-card-2-front fs-2 d-block mb-1" style="color:var(--primary)"></i>
+                <strong>Platobná karta</strong>
+                <p class="small text-muted mb-0">Okamžitá platba kartou</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="payment-method-card" id="card-bank" onclick="selectMethod('bank_transfer')">
+                <i class="bi bi-bank fs-2 d-block mb-1" style="color:var(--primary)"></i>
+                <strong>Bankový prevod</strong>
+                <p class="small text-muted mb-0">UC02 alt – splatnosť 5 dní</p>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" name="payment_method" id="payment_method" value="card">
+        </div>
+
+        <!-- Card fields -->
+        <div class="form-section" id="section-card">
+          <h5><i class="bi bi-credit-card me-2"></i>Platobné údaje karty</h5>
+          <div class="mb-3">
+            <label class="form-label">Číslo karty</label>
+            <input type="text" name="card_number" class="form-control"
+                   placeholder="1234 5678 9012 3456" maxlength="19" id="card-num">
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Platnosť</label>
+              <input type="text" class="form-control" placeholder="MM/RR" maxlength="5">
+            </div>
+            <div class="col-6">
+              <label class="form-label">CVV</label>
+              <input type="text" class="form-control" placeholder="•••" maxlength="3">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Meno na karte</label>
+            <input type="text" class="form-control" placeholder="MENO PRIEZVISKO"
+                   value="{{ current_user.name|upper }}">
+          </div>
+
+          <!-- UC02 exception simulator -->
+          <div class="alert alert-warning">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="simulate_fail"
+                     value="1" id="sim-fail">
+              <label class="form-check-label" for="sim-fail">
+                <strong>Simulovať nedostatok prostriedkov</strong>
+                <span class="text-muted d-block small">UC02 výnimka – platba zlyhá, objednávka dostane stav "čaká sa na platbu"</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank transfer info -->
+        <div class="form-section d-none" id="section-bank">
+          <h5><i class="bi bi-bank me-2"></i>Bankový prevod – UC02 alternatívny scenár</h5>
+          <div class="alert alert-info">
+            <p class="mb-1"><strong>IBAN:</strong> SK00 0000 0000 0000 0000 0000</p>
+            <p class="mb-1"><strong>Suma:</strong> {{ "%.2f"|format(order.total_price) }} €</p>
+            <p class="mb-1"><strong>Variabilný symbol:</strong> VS{{ "%06d"|format(order.id) }}</p>
+            <p class="mb-0 small text-muted">Po prijatí platby systém automaticky spáruje transakciu.</p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fs-5">
+          <i class="bi bi-lock me-2"></i>Zaplatiť {{ "%.2f"|format(order.total_price) }} €
+        </button>
+      </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="col-lg-5">
+      <div class="order-summary sticky-top" style="top:80px">
+        <h5 class="fw-bold mb-3">Súhrn objednávky #{{ order.id }}</h5>
+        {% for item in items %}
+        {% set p = products.get(item.product_id) %}
+        <div class="d-flex justify-content-between small mb-1">
+          <span>
+            {% if p %}{{ p.name }}{% else %}Produkt{% endif %}
+            {% if item.is_custom %}<span class="badge-custom ms-1">Na mieru</span>{% endif %}
+            × {{ item.quantity }}
+          </span>
+          <span class="fw-semibold">{{ "%.2f"|format(item.subtotal()) }} €</span>
+        </div>
+        {% endfor %}
+        <hr>
+        {% if order.delivery_method == 'delivery' %}
+        <div class="small text-muted mb-2">
+          <i class="bi bi-truck me-1"></i>Doručenie: {{ order.delivery_address }}
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-between">
+          <span class="fw-bold">Spolu</span>
+          <span class="order-total">{{ "%.2f"|format(order.total_price) }} €</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function selectMethod(method) {
+  document.getElementById('payment_method').value = method;
+  document.getElementById('card-card').classList.toggle('selected', method === 'card');
+  document.getElementById('card-bank').classList.toggle('selected', method === 'bank_transfer');
+  document.getElementById('section-card').classList.toggle('d-none', method !== 'card');
+  document.getElementById('section-bank').classList.toggle('d-none', method !== 'bank_transfer');
+}
+// Format card number
+document.getElementById('card-num')?.addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim();
+});
+</script>
+{% endblock %}

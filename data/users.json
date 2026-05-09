@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "name": "Jana Nováková",
+    "email": "customer@demo.com",
+    "password_hash": "scrypt:32768:8:1$FqWd2pLbZ95gbnd6$54f7d144748cf5a6a80c6bdb40ea199b44d54ea92517ab8e0031ad4860405dbf72cfcf1ffcdaa3b1612871aeaecd44b1c59c57344b22893ea06f5aaeccab05bd",
+    "role": "customer",
+    "phone": "",
+    "address": "",
+    "created_at": "2026-04-27T09:08:13.360071"
+  },
+  {
+    "id": 2,
+    "name": "Tomáš Krásny",
+    "email": "designer@demo.com",
+    "password_hash": "scrypt:32768:8:1$Ux6IGAz5Vc5UyE68$033e6633fef617ede02d576780524c7c2b3eaf1fee8c31073876455db80c08cc6ebef5e0fd7bb8cf4094f01a888e4c8253c49305c869854a9c83d2c361031793",
+    "role": "designer",
+    "phone": "",
+    "address": "",
+    "created_at": "2026-04-27T09:08:13.489712"
+  },
+  {
+    "id": 3,
+    "name": "Admin FitForYou",
+    "email": "admin@demo.com",
+    "password_hash": "scrypt:32768:8:1$2V7OVLJFJqLbRvhU$9e6e83ea87cdff3755a557b2700ff7d49a4499a45688a638d502b9ce4bd30e59819d7f29ee4f036ed1e5b0fac9675f6f00bf640feebc1f8624d08fa5bf5834de",
+    "role": "admin",
+    "phone": "",
+    "address": "",
+    "created_at": "2026-04-27T09:08:13.634371"
+  },
+  {
+    "id": 4,
+    "name": "Miroslav Skladník",
+    "email": "warehouse@demo.com",
+    "password_hash": "scrypt:32768:8:1$EkgGgdEqQEQCb4bI$788845ba5b41e145cbd39aa0d72803f4208434b6f0f8530424e48408430c9e7425b74049a54d97e8bc1fc7b536fddf6b41b0f1aad9a24fa5e7cfca663c90d368",
+    "role": "warehouse",
+    "phone": "",
+    "address": "",
+    "created_at": "2026-04-27T09:08:13.771482"
+  },
+  {
+    "id": 5,
+    "name": "Peter Terénny",
+    "email": "worker@demo.com",
+    "password_hash": "scrypt:32768:8:1$ydheyxM553Sdz9pj$50187c1b56d3940e4b6320212e602ef67b3a2cf349a5ef972132b6415c3274cb86faf8e0e21928f62a96b1aec6cd7807d3328a0827f904a0887fb38ce28a1be9",
+    "role": "field_worker",
+    "phone": "",
+    "address": "",
+    "created_at": "2026-04-27T09:08:13.908693"
+  }
+]

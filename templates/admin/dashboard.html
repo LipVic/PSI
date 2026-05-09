@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="portal-header">
+  <div class="container">
+    <h1><i class="bi bi-shield-check me-2"></i>Admin Dashboard</h1>
+    <p>Správa systému FitForYou – katalóg, objednávky a dizajny.</p>
+  </div>
+</div>
+<div class="container pb-4">
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card text-center p-3">
+        <i class="bi bi-grid fs-1 mb-1" style="color:var(--primary)"></i>
+        <div class="fs-2 fw-bold">{{ product_count }}</div>
+        <div class="text-muted small">Produktov v katalógu</div>
+        <a href="{{ url_for('admin_catalog') }}" class="btn btn-sm btn-outline-primary mt-2">Spravovať</a>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card text-center p-3">
+        <i class="bi bi-bag fs-1 mb-1" style="color:var(--accent)"></i>
+        <div class="fs-2 fw-bold">{{ order_count }}</div>
+        <div class="text-muted small">Objednávok</div>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary mt-2">Zobraziť</a>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card text-center p-3">
+        <i class="bi bi-pencil-square fs-1 mb-1" style="color:var(--secondary)"></i>
+        <div class="fs-2 fw-bold">{{ pending_designs }}</div>
+        <div class="text-muted small">Čakajúce dizajny</div>
+        <a href="{{ url_for('admin_designs') }}" class="btn btn-sm btn-outline-primary mt-2">Zobraziť</a>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card text-center p-3">
+        <i class="bi bi-people fs-1 mb-1" style="color:var(--primary-light)"></i>
+        <div class="fs-2 fw-bold">{{ user_count }}</div>
+        <div class="text-muted small">Používateľov</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card p-3">
+        <h6 class="fw-bold mb-2"><i class="bi bi-grid me-1"></i>Katalóg nábytku (UC05)</h6>
+        <p class="small text-muted">Pridajte nové produkty alebo upravte existujúce.</p>
+        <a href="{{ url_for('admin_catalog') }}" class="btn btn-primary btn-sm">Otvoriť katalóg</a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-3">
+        <h6 class="fw-bold mb-2"><i class="bi bi-bag me-1"></i>Objednávky</h6>
+        <p class="small text-muted">Prehľad všetkých objednávok vrátane bankových prevodov.</p>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-primary btn-sm">Zobraziť objednávky</a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-3">
+        <h6 class="fw-bold mb-2"><i class="bi bi-brush me-1"></i>Dizajnové požiadavky</h6>
+        <p class="small text-muted">Prehľad všetkých požiadaviek na dizajn interiéru.</p>
+        <a href="{{ url_for('admin_designs') }}" class="btn btn-primary btn-sm">Zobraziť dizajny</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

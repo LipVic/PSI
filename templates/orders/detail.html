@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Objednávka #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <h2 class="fw-bold mb-0"><i class="bi bi-bag me-2"></i>Objednávka #{{ order.id }}</h2>
+    <span class="status-badge status-{{ order.status }} fs-6">{{ order.status_label() }}</span>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <!-- Items -->
+      <div class="form-section">
+        <h5><i class="bi bi-list-ul me-2"></i>Položky</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Produkt</th><th>Rozmery</th><th class="text-center">Qty</th>
+                <th class="text-end">Cena/ks</th><th class="text-end">Spolu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              {% set p = products.get(item.product_id) %}
+              <tr>
+                <td>
+                  {% if p %}{{ p.name }}{% else %}#{{ item.product_id }}{% endif %}
+                  {% if item.is_custom %}<span class="badge-custom ms-1">Na mieru</span>{% endif %}
+                  {% if item.custom_color %}<br><small class="text-muted">{{ item.custom_color }}</small>{% endif %}
+                  {% if item.special_requirements %}<br><small style="color:var(--accent)">{{ item.special_requirements }}</small>{% endif %}
+                </td>
+                <td class="small text-muted">{{ item.dimensions_str() or (p.dimensions if p else '—') }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">{{ "%.2f"|format(item.unit_price) }} €</td>
+                <td class="text-end fw-bold">{{ "%.2f"|format(item.subtotal()) }} €</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-end fw-bold">Celková cena:</td>
+                <td class="text-end order-total">{{ "%.2f"|format(order.total_price) }} €</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment info -->
+      {% if payment %}
+      <div class="form-section">
+        <h5><i class="bi bi-credit-card me-2"></i>Platba</h5>
+        <div class="row g-2 small">
+          <div class="col-6"><span class="text-muted">Spôsob:</span> {{ payment.method_label() }}</div>
+          <div class="col-6">
+            <span class="text-muted">Stav:</span>
+            <span class="status-badge status-{{ payment.status }}">{{ payment.status }}</span>
+          </div>
+          {% if payment.transaction_id %}
+          <div class="col-6"><span class="text-muted">TXN ID:</span> <code>{{ payment.transaction_id }}</code></div>
+          {% endif %}
+          {% if payment.bank_reference %}
+          <div class="col-12">
+            <span class="text-muted">VS pre bankový prevod:</span> <code>{{ payment.bank_reference }}</code>
+            {% if payment.status == 'pending' and current_user.role in ('admin','warehouse') %}
+            <form method="POST" action="{{ url_for('payment_confirm_bank', order_id=order.id) }}" class="d-inline ms-2">
+              <button class="btn btn-sm btn-success">Potvrdiť prevod</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Delivery info -->
+      {% if delivery %}
+      <div class="form-section {% if delivery.status == 'failed' %}border-danger{% endif %}">
+        <h5><i class="bi bi-truck me-2"></i>Doručenie</h5>
+        <div class="row g-2 small mb-2">
+          <div class="col-6"><span class="text-muted">Stav:</span>
+            <span class="status-badge status-{{ delivery.status }}">{{ delivery.status_label() }}</span>
+          </div>
+          <div class="col-6"><span class="text-muted">Adresa:</span> {{ delivery.address }}</div>
+          {% if delivery.scheduled_date %}
+          <div class="col-6"><span class="text-muted">Dátum:</span> {{ delivery.scheduled_date[:10] }}</div>
+          {% endif %}
+        </div>
+
+        {# UC06 exception – worker marked delivery as failed → customer can cancel with refund #}
+        {% if delivery.status == 'failed' and current_user.role == 'customer' and order.customer_id == current_user.id %}
+        <div class="alert alert-danger mb-0">
+          <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Doručenie zlyhalo</strong><br>
+          {% if delivery.completion_notes %}
+          <span class="small">Dôvod: {{ delivery.completion_notes }}</span><br>
+          {% endif %}
+          <span class="small">Terénny pracovník sa nedokáže dostaviť. Môžete zrušiť objednávku – platba vám bude vrátená.</span>
+          <div class="mt-2">
+            <form method="POST" action="{{ url_for('order_cancel_failed_delivery', order_id=order.id) }}">
+              <button class="btn btn-danger btn-sm"
+                      onclick="return confirm('Zrusit objednavku a ziadat o vratenie platby?')">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Zrušiť objednávku a vrátiť platbu
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="order-summary">
+        <h5 class="fw-bold mb-3">Informácie</h5>
+        <div class="small mb-1"><span class="text-muted">Zákazník:</span> {{ customer.name if customer else '—' }}</div>
+        <div class="small mb-1"><span class="text-muted">Vytvorená:</span> {{ order.created_at[:10] }}</div>
+        <div class="small mb-1"><span class="text-muted">Doručenie:</span>
+          {% if order.delivery_method == 'delivery' %}Donáška
+          {% elif order.delivery_method == 'delivery_assembly' %}Donáška + montáž (UC07)
+          {% else %}Osobný odber{% endif %}
+        </div>
+        {% if order.delivery_address and order.delivery_method in ('delivery','delivery_assembly') %}
+        <div class="small mb-1"><span class="text-muted">Adresa:</span> {{ order.delivery_address }}</div>
+        {% endif %}
+        {% if order.notes %}
+        <div class="small mb-3"><span class="text-muted">Poznámky:</span> {{ order.notes }}</div>
+        {% endif %}
+        <hr>
+
+        {% if order.status == 'pending_payment' or order.status == 'awaiting_payment' %}
+        <a href="{{ url_for('payment_view', order_id=order.id) }}"
+           class="btn btn-primary w-100 mb-2">
+          <i class="bi bi-credit-card me-1"></i>Zaplatiť objednávku
+        </a>
+        {% endif %}
+
+        {% if order.status in ('draft','pending_payment','awaiting_payment') %}
+        <form method="POST" action="{{ url_for('order_cancel', order_id=order.id) }}">
+          <button class="btn btn-outline-danger w-100" type="submit"
+                  onclick="return confirm('Naozaj chcete zrušiť objednávku?')">
+            <i class="bi bi-x-circle me-1"></i>Zrušiť objednávku
+          </button>
+        </form>
+        {% endif %}
+
+        <a href="{{ url_for('orders_list') }}" class="btn btn-outline-secondary w-100 mt-2">
+          <i class="bi bi-arrow-left me-1"></i>Späť na zoznam
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

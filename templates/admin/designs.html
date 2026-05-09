@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dizajnové požiadavky{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>Všetky dizajnové požiadavky</h2>
+  <div class="table-responsive">
+    <table class="table table-ffy align-middle">
+      <thead>
+        <tr>
+          <th>#</th><th>Zákazník</th><th>Miestnosť</th><th>Stav</th>
+          <th>Dátum</th><th>Odhad ceny</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in designs %}
+        {% set c = customers.get(d.customer_id) %}
+        <tr>
+          <td class="fw-bold">#{{ d.id }}</td>
+          <td>{{ c.name if c else '—' }}</td>
+          <td>{{ d.room_type or '—' }}</td>
+          <td><span class="status-badge status-{{ d.status }}">{{ d.status_label() }}</span></td>
+          <td class="small">{{ d.created_at[:10] }}</td>
+          <td>
+            {% if d.estimated_price %}
+            {{ "%.2f"|format(d.estimated_price) }} €
+            {% if d.price_over_limit() %}
+            <span class="badge text-bg-danger ms-1">Nad limitom</span>
+            {% endif %}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

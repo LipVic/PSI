@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "supplier_order_id": 1,
+    "material_name": "Dubový masív – dosky",
+    "ordered_qty": 20,
+    "unit_price": 85.0,
+    "product_id": 1,
+    "received_qty": 0,
+    "warehouse_location": "",
+    "status": "pending",
+    "claim_reason": ""
+  },
+  {
+    "id": 2,
+    "supplier_order_id": 1,
+    "material_name": "Borovicový masív – fošne",
+    "ordered_qty": 30,
+    "unit_price": 45.0,
+    "product_id": 4,
+    "received_qty": 0,
+    "warehouse_location": "",
+    "status": "pending",
+    "claim_reason": ""
+  },
+  {
+    "id": 3,
+    "supplier_order_id": 2,
+    "material_name": "Kovové nohy – sada 4 ks",
+    "ordered_qty": 50,
+    "unit_price": 12.0,
+    "product_id": 9,
+    "received_qty": 50,
+    "warehouse_location": "",
+    "status": "received",
+    "claim_reason": ""
+  }
+]

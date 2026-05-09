@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "WoodMaster s.r.o.",
+    "contact_email": "info@woodmaster.sk",
+    "phone": "+421 2 555 0100"
+  },
+  {
+    "id": 2,
+    "name": "MetalForm a.s.",
+    "contact_email": "orders@metalform.sk",
+    "phone": "+421 2 555 0200"
+  }
+]

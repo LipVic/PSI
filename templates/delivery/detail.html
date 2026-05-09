@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block title %}Doručenie #{{ delivery.id }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-truck me-2"></i>Doručenie #{{ delivery.id }}
+    </h2>
+    <span class="status-badge status-{{ delivery.status }} fs-6">{{ delivery.status_label() }}</span>
+    {% if delivery.requires_assembly %}
+    <span class="badge text-bg-success fs-6"><i class="bi bi-tools me-1"></i>UC07 – Montáž</span>
+    {% if delivery.assembly_status %}
+    <span class="badge text-bg-secondary">{{ delivery.assembly_label() }}</span>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="uc-info mb-3">
+    {% if delivery.requires_assembly %}
+    <strong>UC06 + UC07</strong> – Doruč tovar, skontroluj balenie, zmontuj nábytok a potvrď odovzdanie zákazníkovi.<br>
+    Alternatíva: zákazník nemá miesto → ponúkni vypratanie za príplatok.<br>
+    Výnimka: poškodený tovar → vytvor reklamačný záznam.
+    {% else %}
+    <strong>UC06</strong> – Doruč tovar na adresu zákazníka a potvrď odovzdanie.<br>
+    Alternatíva: preložiť termín. Výnimka: nemožnosť dostaviť sa.
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+
+      <!-- Info -->
+      <div class="form-section">
+        <h5><i class="bi bi-info-circle me-2"></i>Informácie o doručení</h5>
+        <div class="row g-2 small">
+          <div class="col-md-6">
+            <span class="text-muted">Zákazník:</span>
+            <strong class="d-block">{{ customer.name if customer else '—' }}</strong>
+            {% if customer and customer.phone %}
+            <a href="tel:{{ customer.phone }}"><i class="bi bi-telephone me-1"></i>{{ customer.phone }}</a>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <span class="text-muted">Adresa:</span>
+            <strong class="d-block">{{ delivery.address }}</strong>
+          </div>
+          {% if delivery.scheduled_date %}
+          <div class="col-md-6">
+            <span class="text-muted">Naplánované:</span>
+            <strong class="d-block">{{ delivery.scheduled_date[:10] }}</strong>
+          </div>
+          {% endif %}
+          {% if order %}
+          <div class="col-md-6">
+            <span class="text-muted">Objednávka:</span>
+            <strong class="d-block">#{{ order.id }} – {{ "%.2f"|format(order.total_price) }} €</strong>
+          </div>
+          {% endif %}
+        </div>
+        {% if order and order.notes %}
+        <div class="alert alert-info mt-2 small mb-0">
+          <i class="bi bi-chat-left me-1"></i><strong>Poznámka zákazníka:</strong> {{ order.notes }}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Items -->
+      {% if items %}
+      <div class="form-section">
+        <h5><i class="bi bi-list-ul me-2"></i>Obsah zásielky</h5>
+        {% for item in items %}
+        {% set p = products.get(item.product_id) %}
+        <div class="d-flex justify-content-between small mb-1">
+          <span>{% if p %}{{ p.name }}{% else %}Produkt #{{ item.product_id }}{% endif %}
+            {% if item.is_custom %}<span class="badge-custom ms-1">Na mieru</span>{% endif %}
+            × {{ item.quantity }}
+          </span>
+          <span class="fw-semibold">{{ "%.2f"|format(item.subtotal()) }} €</span>
+        </div>
+        {% endfor %}
+        {% if delivery.clearance_requested %}
+        <div class="d-flex justify-content-between small mb-1 text-success fw-semibold">
+          <span><i class="bi bi-trash me-1"></i>Vypratanie starého nábytku</span>
+          <span>+{{ "%.2f"|format(delivery.clearance_fee) }} €</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ══ ACTIVE ACTIONS ══ -->
+      {% if delivery.status in ('scheduled', 'rescheduled', 'failed') or
+            (delivery.requires_assembly and delivery.assembly_status in ('pending','in_progress','damaged')) %}
+
+      <!-- ── UC07: Damage claim (step 2 exception) ── -->
+      {% if delivery.requires_assembly and delivery.assembly_status in ('pending','in_progress') %}
+      <div class="form-section mb-3" style="border-color:var(--danger)">
+        <h5 class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Výnimka UC07 – Poškodenie / chýbajúci komponent</h5>
+        <p class="small text-muted">Krok 2.1 – Zisti poškodenie pri kontrole balenia so zákazníkom.</p>
+        <form method="POST">
+          <div class="mb-2">
+            <input type="text" name="damage_description" class="form-control form-control-sm"
+                   placeholder="Popis poškodenia alebo chýbajúceho komponentu" required>
+          </div>
+          <button type="submit" name="action" value="damage_claim" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-earmark-x me-1"></i>Vytvoriť reklamačný záznam
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+      {% if delivery.assembly_status == 'damaged' %}
+      <div class="alert alert-danger">
+        <strong><i class="bi bi-exclamation-triangle me-2"></i>Reklamácia vytvorená</strong><br>
+        <span class="small">{{ delivery.completion_notes }}</span><br>
+        <span class="small text-muted">Zarezervujte so zákazníkom náhradný termín a vytvorte novú objednávku.</span>
+      </div>
+      {% endif %}
+
+      {% if delivery.status in ('scheduled','rescheduled') and not (delivery.requires_assembly and delivery.assembly_status == 'damaged') %}
+
+        <!-- ── UC07: Assembly workflow ── -->
+        {% if delivery.requires_assembly %}
+        <div class="form-section" style="border-color:var(--accent)">
+          <h5 style="color:var(--accent)"><i class="bi bi-tools me-2"></i>UC07 – Montáž nábytku</h5>
+
+          {% if delivery.assembly_status == 'pending' %}
+          <p class="small text-muted">Skontrolujte balenie so zákazníkom (krok 2), potom spustite montáž.</p>
+          <form method="POST">
+            <button type="submit" name="action" value="start_assembly" class="btn btn-outline-success px-4">
+              <i class="bi bi-play-circle me-1"></i>Spustiť montáž (kroky 3–6)
+            </button>
+          </form>
+
+          {% elif delivery.assembly_status == 'in_progress' %}
+          <p class="small text-muted">Montáž prebieha. Po dokončení krokov 3–6 potvrďte odovzdanie zákazníkovi (krok 7).</p>
+
+          <!-- UC07 alt: clearance service -->
+          {% if not delivery.clearance_requested %}
+          <div class="alert alert-warning py-2 small mb-3">
+            <strong>Alt. scenár:</strong> Zákazník nemá miesto pre nábytok?
+          </div>
+          <form method="POST" class="mb-3">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">Poplatok za vypratanie (€)</span>
+              <input type="number" name="clearance_fee" value="150" min="0" step="10" class="form-control" style="max-width:100px">
+              <button type="submit" name="action" value="add_clearance" class="btn btn-warning">
+                <i class="bi bi-trash me-1"></i>Pridať vypratanie
+              </button>
+            </div>
+          </form>
+          <form method="POST" class="mb-3">
+            <button type="submit" name="action" value="decline_clearance" class="btn btn-sm btn-outline-secondary">
+              Zákazník odmietol vypratanie
+            </button>
+          </form>
+          {% else %}
+          <div class="alert alert-success py-2 small mb-3">
+            <i class="bi bi-check me-1"></i>Vypratanie pridané (+{{ "%.2f"|format(delivery.clearance_fee) }} €)
+          </div>
+          {% endif %}
+
+          <!-- UC07 main: confirm assembly -->
+          <form method="POST">
+            <div class="mb-2">
+              <input type="text" name="notes" class="form-control form-control-sm"
+                     placeholder="Záverečná poznámka (napr. zákazník spokojný)">
+            </div>
+            <button type="submit" name="action" value="confirm_assembly" class="btn btn-success px-4">
+              <i class="bi bi-check-circle me-2"></i>Zákazník potvrdil prevzatie (krok 7) – uzavrieť
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <!-- UC06 delivery confirm (without assembly) not shown since assembly handles closure -->
+
+        {% else %}
+        <!-- ── UC06 standard delivery confirm ── -->
+        <div class="form-section" style="border-color:var(--success)">
+          <h5 class="text-success"><i class="bi bi-check-circle me-2"></i>Potvrdiť doručenie (UC06)</h5>
+          <form method="POST">
+            <div class="mb-3">
+              <input type="text" name="notes" class="form-control form-control-sm"
+                     placeholder="Záverečná poznámka (voliteľné)">
+            </div>
+            <button type="submit" name="action" value="confirm_delivery" class="btn btn-success px-4">
+              <i class="bi bi-check-circle me-2"></i>Potvrdiť odovzdanie zákazníkovi
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- ── UC06 alt: reschedule ── -->
+        <div class="form-section mt-3" style="border-color:var(--warning)">
+          <h5 class="text-warning"><i class="bi bi-calendar-event me-2"></i>Preložiť termín (UC06 alt)</h5>
+          <p class="small text-muted">Zákazník nemôže prebrať tovar v danom čase.</p>
+          <form method="POST">
+            <div class="input-group input-group-sm">
+              <input type="date" name="new_date" class="form-control" required>
+              <button type="submit" name="action" value="reschedule" class="btn btn-warning">Preložiť</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ── UC06 exception: cannot arrive ── -->
+        <div class="form-section mt-3" style="border-color:var(--danger)">
+          <h5 class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Nemôžem sa dostaviť (UC06 výnimka)</h5>
+          <p class="small text-muted">Zákazník dostane upozornenie a bude môcť zrušiť objednávku s vrátením platby.</p>
+          <form method="POST">
+            <div class="input-group input-group-sm">
+              <input type="text" name="fail_reason" class="form-control"
+                     placeholder="Dôvod (havárie, choroba...)" required>
+              <button type="submit" name="action" value="cannot_deliver" class="btn btn-outline-danger"
+                      onclick="return confirm('Označiť ako neúspešné?')">
+                <i class="bi bi-exclamation-triangle me-1"></i>Nedokážem doručiť
+              </button>
+            </div>
+          </form>
+        </div>
+
+      {% endif %}
+      {% endif %} {# end active actions #}
+
+      {% if delivery.status in ('delivered','cancelled') %}
+      <div class="alert alert-secondary">
+        <strong>{{ delivery.status_label() }}</strong>
+        {% if delivery.completion_notes %} – {{ delivery.completion_notes }}{% endif %}
+      </div>
+      <a href="{{ url_for('delivery_dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Späť
+      </a>
+      {% endif %}
+
+    </div>
+
+    <!-- ── Timeline sidebar ── -->
+    <div class="col-lg-5">
+      <div class="order-summary">
+        <h5 class="fw-bold mb-3">Postup</h5>
+        <ul class="delivery-timeline">
+          <li>
+            <div class="timeline-dot done"><i class="bi bi-check"></i></div>
+            <div><div class="fw-semibold small">Objednávka zaplatená</div>
+            <div class="text-muted" style="font-size:.8rem">Doručenie vytvorené</div></div>
+          </li>
+          <li>
+            <div class="timeline-dot {% if delivery.field_worker_id %}done{% endif %}">
+              <i class="bi bi-person-check"></i></div>
+            <div><div class="fw-semibold small">Priradenie pracovníka</div>
+            <div class="text-muted" style="font-size:.8rem">{{ 'Priradené' if delivery.field_worker_id else 'Čaká' }}</div></div>
+          </li>
+          <li>
+            <div class="timeline-dot {% if delivery.status in ('delivered','cancelled') or delivery.assembly_status %}done{% endif %}">
+              <i class="bi bi-truck"></i></div>
+            <div><div class="fw-semibold small">Doručenie na adresu</div>
+            <div class="text-muted" style="font-size:.8rem">{{ delivery.scheduled_date[:10] if delivery.scheduled_date else '—' }}</div></div>
+          </li>
+          {% if delivery.requires_assembly %}
+          <li>
+            <div class="timeline-dot {% if delivery.assembly_status == 'in_progress' or delivery.assembly_status == 'completed' %}done{% endif %}">
+              <i class="bi bi-tools"></i></div>
+            <div><div class="fw-semibold small">Montáž nábytku (UC07)</div>
+            <div class="text-muted" style="font-size:.8rem">{{ delivery.assembly_label() }}</div></div>
+          </li>
+          {% if delivery.clearance_requested %}
+          <li>
+            <div class="timeline-dot done"><i class="bi bi-trash"></i></div>
+            <div><div class="fw-semibold small">Vypratanie starého nábytku</div>
+            <div class="text-muted" style="font-size:.8rem">+{{ "%.2f"|format(delivery.clearance_fee) }} €</div></div>
+          </li>
+          {% endif %}
+          {% endif %}
+          <li>
+            <div class="timeline-dot {% if delivery.status == 'delivered' %}done{% endif %}">
+              <i class="bi bi-house-check"></i></div>
+            <div><div class="fw-semibold small">Zákazník potvrdil prevzatie</div>
+            <div class="text-muted" style="font-size:.8rem">
+              {% if delivery.status == 'delivered' %}Dokončené
+              {% elif delivery.status == 'cancelled' %}Zrušené
+              {% elif delivery.status == 'failed' %}Čaká na zákazníka
+              {% else %}Čaká{% endif %}
+            </div></div>
+          </li>
+        </ul>
+
+        {% if order %}
+        <hr>
+        <div class="small">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Objednávka:</span>
+            <a href="{{ url_for('order_detail', order_id=order.id) }}">#{{ order.id }}</a>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted fw-bold">Celková suma:</span>
+            <span class="fw-bold" style="color:var(--primary)">{{ "%.2f"|format(order.total_price) }} €</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

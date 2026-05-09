@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Moje objednávky{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="fw-bold mb-3"><i class="bi bi-bag me-2"></i>Moje objednávky</h2>
+  {% if orders %}
+  <div class="table-responsive">
+    <table class="table table-ffy align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Dátum</th>
+          <th>Stav</th>
+          <th>Doručenie</th>
+          <th class="text-end">Suma</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="fw-bold">#{{ o.id }}</td>
+          <td class="small">{{ o.created_at[:10] }}</td>
+          <td><span class="status-badge status-{{ o.status }}">{{ o.status_label() }}</span></td>
+          <td class="small">
+            {% if o.delivery_method == 'delivery' %}
+            <i class="bi bi-truck me-1"></i>{{ o.delivery_address[:30] }}
+            {% else %}
+            <i class="bi bi-shop me-1"></i>Osobný odber
+            {% endif %}
+          </td>
+          <td class="text-end fw-bold">{{ "%.2f"|format(o.total_price) }} €</td>
+          <td>
+            <a href="{{ url_for('order_detail', order_id=o.id) }}"
+               class="btn btn-sm btn-outline-primary">Detail</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-bag-x fs-1 d-block mb-3"></i>
+    <h5>Žiadne objednávky</h5>
+    <a href="{{ url_for('catalog_index') }}" class="btn btn-primary mt-2">
+      Prezrieť katalóg
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

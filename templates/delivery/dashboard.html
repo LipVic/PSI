@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Portál terénneho pracovníka{% endblock %}
+{% block content %}
+<div class="portal-header">
+  <div class="container">
+    <h1><i class="bi bi-truck me-2"></i>Portál terénneho pracovníka</h1>
+    <p>Doručenia, montáže a správa odovzdania tovaru zákazníkom.</p>
+  </div>
+</div>
+
+<div class="container pb-4">
+  <div class="uc-info mb-4">
+    <strong>UC06</strong> – Doruč tovar zákazníkovi. &nbsp;|&nbsp;
+    <strong>UC07</strong> – Ak je objednané doručenie + montáž, zmontuj nábytok a potvrď odovzdanie.
+  </div>
+
+  <!-- ── Active deliveries ── -->
+  <h4 class="fw-bold mb-3">
+    <i class="bi bi-calendar-check me-2"></i>Aktívne doručenia
+    {% if deliveries %}<span class="badge text-bg-primary">{{ deliveries|length }}</span>{% endif %}
+  </h4>
+
+  {% if deliveries %}
+  <div class="row g-3 mb-4">
+    {% for d in deliveries %}
+    {% set o = orders.get(d.order_id) %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card h-100 {% if d.requires_assembly %}border-success{% endif %}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-1">
+            <strong>Doručenie #{{ d.id }}</strong>
+            <span class="status-badge status-{{ d.status }}">{{ d.status_label() }}</span>
+          </div>
+          {% if d.requires_assembly %}
+          <div class="mb-1">
+            <span class="badge text-bg-success"><i class="bi bi-tools me-1"></i>UC07 – Montáž</span>
+            {% if d.assembly_status %}
+            <span class="badge text-bg-secondary ms-1">{{ d.assembly_label() }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ d.address or '—' }}</div>
+          {% if d.scheduled_date %}
+          <div class="small mb-1"><i class="bi bi-calendar me-1"></i>{{ d.scheduled_date[:10] }}</div>
+          {% endif %}
+          {% if o %}
+          <div class="small text-muted mb-2">Objednávka #{{ o.id }} &bull; {{ "%.2f"|format(o.total_price) }} €</div>
+          {% endif %}
+          {% if d.status == 'failed' %}
+          <div class="alert alert-danger py-1 small mb-2">Označené ako neúspešné – čaká sa na rozhodnutie zákazníka.</div>
+          {% endif %}
+          <a href="{{ url_for('delivery_detail', delivery_id=d.id) }}"
+             class="btn btn-primary w-100 mt-1 btn-sm">
+            <i class="bi bi-arrow-right-circle me-1"></i>Spravovať
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted mb-4">Žiadne aktívne doručenia.</p>
+  {% endif %}
+
+  <!-- ── Unassigned ── -->
+  {% if unassigned %}
+  <h4 class="fw-bold mb-3"><i class="bi bi-inbox me-2"></i>Nepriradené doručenia</h4>
+  <div class="row g-3 mb-4">
+    {% for d in unassigned %}
+    {% set o = orders.get(d.order_id) %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="mb-1"><strong>Doručenie #{{ d.id }}</strong>
+            {% if d.requires_assembly %}<span class="badge text-bg-success ms-1"><i class="bi bi-tools"></i> Montáž</span>{% endif %}
+          </div>
+          <div class="small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ d.address or '—' }}</div>
+          {% if d.scheduled_date %}<div class="small mb-2"><i class="bi bi-calendar me-1"></i>{{ d.scheduled_date[:10] }}</div>{% endif %}
+          <form method="POST" action="{{ url_for('delivery_take', delivery_id=d.id) }}">
+            <button class="btn btn-sm btn-outline-primary w-100">Prevziať</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Completed history ── -->
+  {% if completed %}
+  <h4 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>História doručení</h4>
+  <div class="table-responsive">
+    <table class="table table-ffy align-middle">
+      <thead>
+        <tr><th>#</th><th>Objednávka</th><th>Adresa</th><th>Dátum</th><th>Stav</th><th>Montáž</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for d in completed|sort(attribute='created_at', reverse=True) %}
+        {% set o = orders.get(d.order_id) %}
+        <tr>
+          <td class="fw-bold">#{{ d.id }}</td>
+          <td>{% if o %}#{{ o.id }}{% else %}—{% endif %}</td>
+          <td class="small">{{ d.address[:30] }}</td>
+          <td class="small">{{ d.scheduled_date[:10] if d.scheduled_date else '—' }}</td>
+          <td><span class="status-badge status-{{ d.status }}">{{ d.status_label() }}</span></td>
+          <td>
+            {% if d.requires_assembly %}
+            <span class="badge text-bg-success">{{ d.assembly_label() }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('delivery_detail', delivery_id=d.id) }}" class="btn btn-sm btn-outline-secondary">Detail</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

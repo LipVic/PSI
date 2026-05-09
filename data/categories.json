@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Stoly",
+    "description": "Jedálenské, písacie a konferenčné stoly",
+    "icon": "bi-table"
+  },
+  {
+    "id": 2,
+    "name": "Skrine",
+    "description": "Šatníkové a knižničné skrine",
+    "icon": "bi-archive"
+  },
+  {
+    "id": 3,
+    "name": "Postele",
+    "description": "Manželské, jednolôžkové a detské postele",
+    "icon": "bi-moon"
+  },
+  {
+    "id": 4,
+    "name": "Stoličky",
+    "description": "Jedálenské, kancelárske a barové stoličky",
+    "icon": "bi-person-workspace"
+  },
+  {
+    "id": 5,
+    "name": "Pohovky",
+    "description": "Rohové sedačky a dvojsedačky",
+    "icon": "bi-house-heart"
+  },
+  {
+    "id": 6,
+    "name": "Komody",
+    "description": "Nočné stolíky, komody a skrinky",
+    "icon": "bi-layers"
+  }
+]

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Registrácia{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header text-center py-3">
+          <i class="bi bi-person-plus fs-4 me-2"></i>Registrácia
+        </div>
+        <div class="card-body p-4">
+          <form method="POST">
+            <div class="mb-3">
+              <label class="form-label">Meno a priezvisko</label>
+              <input type="text" name="name" class="form-control" required autofocus
+                     placeholder="Ján Novák">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" name="email" class="form-control" required
+                     placeholder="vas@email.sk">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Heslo</label>
+              <input type="password" name="password" class="form-control" required
+                     placeholder="aspoň 6 znakov" minlength="6">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Telefón <span class="text-muted">(voliteľné)</span></label>
+              <input type="tel" name="phone" class="form-control"
+                     placeholder="+421 900 000 000">
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Adresa <span class="text-muted">(voliteľné)</span></label>
+              <input type="text" name="address" class="form-control"
+                     placeholder="Ulica 1, Mesto">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">
+              <i class="bi bi-person-check me-1"></i>Vytvoriť účet
+            </button>
+          </form>
+          <hr>
+          <div class="text-center small text-muted">
+            Máte účet? <a href="{{ url_for('auth_login') }}">Prihláste sa</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

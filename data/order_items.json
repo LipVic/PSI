@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "order_id": 1,
+    "product_id": 1,
+    "quantity": 1,
+    "unit_price": 649.0,
+    "is_custom": false,
+    "custom_width": null,
+    "custom_height": null,
+    "custom_depth": null,
+    "custom_color": "",
+    "special_requirements": ""
+  },
+  {
+    "id": 2,
+    "order_id": 2,
+    "product_id": 4,
+    "quantity": 1,
+    "unit_price": 1123.75,
+    "is_custom": true,
+    "custom_width": 25.0,
+    "custom_height": 25.0,
+    "custom_depth": 25.0,
+    "custom_color": "dzb",
+    "special_requirements": "vela policiek"
+  },
+  {
+    "id": 3,
+    "order_id": 3,
+    "product_id": 3,
+    "quantity": 5,
+    "unit_price": 189.0,
+    "is_custom": false,
+    "custom_width": null,
+    "custom_height": null,
+    "custom_depth": null,
+    "custom_color": "",
+    "special_requirements": ""
+  }
+]

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Inventár skladu{% endblock %}
+{% block content %}
+<div class="portal-header">
+  <div class="container">
+    <h1><i class="bi bi-clipboard2-data me-2"></i>Inventár skladu</h1>
+    <p>Aktuálny stav zásob všetkých produktov. Aktualizuje sa pri prijatí tovaru od dodávateľa (UC04).</p>
+  </div>
+</div>
+
+<div class="container pb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="uc-info mb-0">
+      <strong>UC04</strong> – Zásoby sa automaticky navyšujú po potvrdení príjmu tovaru od dodávateľa.
+    </div>
+    <a href="{{ url_for('warehouse_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Späť na príjem
+    </a>
+  </div>
+
+  <!-- Summary cards -->
+  {% set total_items = products|length %}
+  {% set in_stock = products|selectattr('stock', 'gt', 0)|list|length %}
+  {% set out_of_stock = products|selectattr('stock', 'equalto', 0)|list|length %}
+  <div class="row g-3 mb-4">
+    <div class="col-sm-4">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold" style="color:var(--primary)">{{ total_items }}</div>
+        <div class="text-muted small">Celkom produktov</div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold text-success">{{ in_stock }}</div>
+        <div class="text-muted small">Dostupných na sklade</div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold text-danger">{{ out_of_stock }}</div>
+        <div class="text-muted small">Vypredaných (0 ks)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-ffy align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Produkt</th>
+          <th>Kategória</th>
+          <th>Materiál</th>
+          <th>Rozmery</th>
+          <th class="text-center">Stav skladu</th>
+          <th class="text-end">Cena/ks</th>
+          <th class="text-center">Dostupný</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products|sort(attribute='category_id') %}
+        {% set cat = cat_map.get(p.category_id) %}
+        <tr>
+          <td class="text-muted small">{{ p.id }}</td>
+          <td class="fw-semibold">{{ p.name }}</td>
+          <td class="small">{{ cat.name if cat else '—' }}</td>
+          <td class="small">{{ p.material or '—' }}</td>
+          <td class="small">{{ p.dimensions or '—' }}</td>
+          <td class="text-center">
+            {% if p.stock == 0 %}
+              <span class="badge text-bg-danger">0 ks – vypredané</span>
+            {% elif p.stock <= 3 %}
+              <span class="badge text-bg-warning text-dark">{{ p.stock }} ks – málo</span>
+            {% else %}
+              <span class="badge text-bg-success">{{ p.stock }} ks</span>
+            {% endif %}
+          </td>
+          <td class="text-end">{{ "%.2f"|format(p.price) }} €</td>
+          <td class="text-center">
+            {% if p.is_available %}
+              <i class="bi bi-check-circle-fill text-success"></i>
+            {% else %}
+              <i class="bi bi-x-circle-fill text-danger" title="Deaktivovaný adminom"></i>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

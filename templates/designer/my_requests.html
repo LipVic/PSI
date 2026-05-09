@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Moje dizajnové požiadavky{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Moje dizajnové požiadavky</h2>
+    <a href="{{ url_for('design_new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Nová požiadavka
+    </a>
+  </div>
+
+  {% if requests %}
+  <div class="row g-4">
+    {% for dr in requests %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card design-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="fw-bold">#{{ dr.id }} – {{ dr.room_type or 'Dizajn' }}</span>
+            <span class="status-badge status-{{ dr.status }}">{{ dr.status_label() }}</span>
+          </div>
+          <div class="small text-muted mb-2">
+            <i class="bi bi-calendar me-1"></i>{{ dr.created_at[:10] }}
+            {% if dr.room_dimensions %} &bull; {{ dr.room_dimensions }}{% endif %}
+          </div>
+          {% if dr.style_preferences %}
+          <div class="small mb-1"><i class="bi bi-palette me-1"></i>{{ dr.style_preferences }}</div>
+          {% endif %}
+          {% if dr.customer_notes %}
+          <div class="small text-muted mb-2">{{ dr.customer_notes[:80] }}{% if dr.customer_notes|length > 80 %}…{% endif %}</div>
+          {% endif %}
+
+          {% if dr.estimated_price %}
+          <div class="small mb-1">
+            <i class="bi bi-tag me-1"></i>Odhadovaná cena:
+            <strong {% if dr.price_over_limit() %}class="price-over-limit"{% endif %}>
+              {{ "%.2f"|format(dr.estimated_price) }} €
+            </strong>
+            {% if dr.customer_price_limit %}
+            <span class="text-muted">/ limit: {{ "%.2f"|format(dr.customer_price_limit) }} €</span>
+            {% endif %}
+            {% if dr.price_over_limit() %}
+            <span class="badge text-bg-danger ms-1">Nad limitom</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if dr.material_suggestion %}
+          <div class="small mb-2"><i class="bi bi-tree me-1"></i>Navrhovaný materiál: {{ dr.material_suggestion }}</div>
+          {% endif %}
+
+          {% if dr.designer_notes %}
+          <div class="alert alert-info py-2 small mb-2">
+            <strong>Dizajnér:</strong> {{ dr.designer_notes }}
+          </div>
+          {% endif %}
+
+          {% if dr.revision_count > 0 %}
+          <div class="small text-muted mb-2">
+            <i class="bi bi-arrow-clockwise me-1"></i>Úpravy: {{ dr.revision_count }}
+          </div>
+          {% endif %}
+
+          <!-- Customer actions -->
+          {% if dr.status == 'sent_to_customer' %}
+          <div class="d-flex gap-2 mt-3 flex-wrap">
+            <form method="POST" action="{{ url_for('design_approve', dr_id=dr.id) }}">
+              <button class="btn btn-sm btn-success">
+                <i class="bi bi-check-circle me-1"></i>Schváliť dizajn
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('design_revision', dr_id=dr.id) }}">
+              <button class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-pencil me-1"></i>Požiadať o úpravu
+              </button>
+            </form>
+          </div>
+          {% elif dr.status in ('pending','in_progress','revision_requested') %}
+          <p class="small text-muted mt-2 mb-1">
+            <i class="bi bi-hourglass-split me-1"></i>
+            {% if dr.status == 'pending' %}Čaká na priradenie dizajnéra…
+            {% elif dr.status == 'in_progress' %}Dizajnér pracuje na návrhu…
+            {% else %}Dizajnér zapracúva úpravy…{% endif %}
+          </p>
+          <form method="POST" action="{{ url_for('design_cancel', dr_id=dr.id) }}">
+            <button class="btn btn-sm btn-outline-danger mt-1">Zrušiť</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-pencil-square fs-1 d-block mb-3"></i>
+    <h5>Zatiaľ žiadne požiadavky</h5>
+    <a href="{{ url_for('design_new') }}" class="btn btn-primary mt-2">
+      Vytvoriť prvú požiadavku
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Portál dizajnéra{% endblock %}
+{% block content %}
+<div class="portal-header">
+  <div class="container">
+    <h1><i class="bi bi-brush me-2"></i>Portál dizajnéra</h1>
+    <p>Vitajte, {{ current_user.name }}. Spravujte tu dizajnové požiadavky zákazníkov.</p>
+  </div>
+</div>
+
+<div class="container pb-4">
+  <div class="uc-info mb-4">
+    <strong>UC03</strong> – Prevzajte požiadavku, analyzujte preferencie zákazníka, nahrajte návrh a odošlite na schválenie.
+  </div>
+
+  <!-- ── In progress ── -->
+  {% if in_progress %}
+  <h4 class="fw-bold mb-3"><i class="bi bi-play-circle text-primary me-2"></i>Rozpracované <span class="badge text-bg-primary">{{ in_progress|length }}</span></h4>
+  <div class="row g-3 mb-4">
+    {% for dr in in_progress %}
+    {% set c = customers.get(dr.customer_id) %}
+    <div class="col-md-6">
+      <div class="card design-card border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-1">
+            <strong>#{{ dr.id }} – {{ dr.room_type }}</strong>
+            <span class="status-badge status-{{ dr.status }}">{{ dr.status_label() }}</span>
+          </div>
+          <div class="small text-muted mb-2">Zákazník: {{ c.name if c else '—' }}{% if dr.room_dimensions %} &bull; {{ dr.room_dimensions }}{% endif %}</div>
+          <a href="{{ url_for('designer_work', dr_id=dr.id) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-pencil me-1"></i>Pracovať na návrhu
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Pending / revision available ── -->
+  <h4 class="fw-bold mb-3">
+    <i class="bi bi-inbox me-2"></i>Čakajúce na prevzatie
+    {% if pending %}<span class="badge text-bg-warning ms-1">{{ pending|length }}</span>{% endif %}
+  </h4>
+  {% if pending %}
+  <div class="row g-3 mb-4">
+    {% for dr in pending %}
+    {% set c = customers.get(dr.customer_id) %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <strong>#{{ dr.id }}</strong>
+            <span class="status-badge status-{{ dr.status }}">{{ dr.status_label() }}</span>
+          </div>
+          <div class="mb-1"><i class="bi bi-house me-1"></i><strong>{{ dr.room_type }}</strong></div>
+          <div class="small text-muted mb-1">Zákazník: {{ c.name if c else '—' }}</div>
+          {% if dr.room_dimensions %}<div class="small mb-1"><i class="bi bi-rulers me-1"></i>{{ dr.room_dimensions }}</div>{% endif %}
+          {% if dr.style_preferences %}<div class="small mb-1"><i class="bi bi-palette me-1"></i>{{ dr.style_preferences }}</div>{% endif %}
+          {% if dr.customer_price_limit %}<div class="small mb-2"><i class="bi bi-wallet me-1"></i>Limit: {{ "%.2f"|format(dr.customer_price_limit) }} €</div>{% endif %}
+          {% if dr.revision_count > 0 %}
+          <div class="small text-warning mb-2"><i class="bi bi-arrow-clockwise me-1"></i>Požadovaná úprava č. {{ dr.revision_count }}</div>
+          {% endif %}
+          <form method="POST" action="{{ url_for('designer_take', dr_id=dr.id) }}">
+            <button class="btn btn-sm btn-primary w-100 mt-1"><i class="bi bi-play me-1"></i>Prevziať</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-light mb-4">Žiadne čakajúce požiadavky.</div>
+  {% endif %}
+
+  <!-- ── My history (sent / approved / cancelled) ── -->
+  {% if my_all %}
+  <h4 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Moje vybavené požiadavky</h4>
+  <div class="table-responsive">
+    <table class="table table-ffy align-middle">
+      <thead>
+        <tr><th>#</th><th>Zákazník</th><th>Miestnosť</th><th>Stav</th><th>Odhad ceny</th><th>Úpravy</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for dr in my_all|sort(attribute='created_at', reverse=True) %}
+        {% set c = customers.get(dr.customer_id) %}
+        <tr>
+          <td class="fw-bold">#{{ dr.id }}</td>
+          <td>{{ c.name if c else '—' }}</td>
+          <td>{{ dr.room_type or '—' }}</td>
+          <td><span class="status-badge status-{{ dr.status }}">{{ dr.status_label() }}</span></td>
+          <td>{% if dr.estimated_price %}{{ "%.2f"|format(dr.estimated_price) }} €{% if dr.price_over_limit() %} <span class="badge text-bg-danger ms-1">Nad limitom</span>{% endif %}{% else %}—{% endif %}</td>
+          <td>{{ dr.revision_count }}</td>
+          <td>
+            {% if dr.status in ('sent_to_customer', 'revision_requested') %}
+            <a href="{{ url_for('designer_work', dr_id=dr.id) }}" class="btn btn-sm btn-outline-primary">Upraviť</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
